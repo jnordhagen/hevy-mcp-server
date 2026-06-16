@@ -42,6 +42,20 @@ import { handleError } from "./errors.js";
 const GroupBySchema = z.enum(["week", "month"]);
 
 /**
+ * Normalize a routine from a create/update API response.
+ *
+ * Unlike GET /v1/routines/{id} (which the client already unwraps to a bare
+ * object), the POST/PUT routine endpoints return the routine wrapped under a
+ * `routine` key, and as an array. Reading `.title`/`.id`/`.exercises` directly
+ * off that wrapper yields `undefined`/`0`. This unwraps all observed shapes:
+ * `{ routine: [routine] }`, `{ routine: routine }`, or a bare routine object.
+ */
+function unwrapRoutine(response: any): any {
+	const inner = response?.routine ?? response;
+	return Array.isArray(inner) ? inner[0] : inner;
+}
+
+/**
  * Register all Hevy MCP tools on the given server using the given client.
  *
  * This is shared between the remote Cloudflare Workers agent (src/mcp-agent.ts)
@@ -395,17 +409,15 @@ export function registerHevyTools(server: McpServer, client: HevyClient): void {
 			// Validate routine data including exercises and sets
 			validateRoutineData(args);
 
-			const routine = await client.createRoutine(transformRoutineToAPI(args));
+			const routine = unwrapRoutine(
+				await client.createRoutine(transformRoutineToAPI(args)),
+			);
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: `✓ Successfully created routine: ${routine.title}`,
-					},
-					{
-						type: "text",
-						text: `Routine ID: ${routine.id}\nExercises: ${routine.exercises?.length || 0}`,
+						text: `✓ Successfully created routine: ${routine.title}\nRoutine ID: ${routine.id}\nExercises: ${routine.exercises?.length || 0}`,
 					},
 					{
 						type: "text",
@@ -431,20 +443,18 @@ export function registerHevyTools(server: McpServer, client: HevyClient): void {
 				// Validate routine data including exercises and sets
 				validateRoutineData(routineData);
 
-				const routine = await client.updateRoutine(
-					routine_id,
-					transformRoutineToAPI(routineData),
+				const routine = unwrapRoutine(
+					await client.updateRoutine(
+						routine_id,
+						transformRoutineToAPI(routineData),
+					),
 				);
 
 				return {
 					content: [
 						{
 							type: "text",
-							text: `✓ Successfully updated routine: ${routine.title}`,
-						},
-						{
-							type: "text",
-							text: `Routine ID: ${routine.id}\nExercises: ${routine.exercises?.length || 0}`,
+							text: `✓ Successfully updated routine: ${routine.title}\nRoutine ID: ${routine.id}\nExercises: ${routine.exercises?.length || 0}`,
 						},
 					],
 				};
