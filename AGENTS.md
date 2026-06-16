@@ -4,7 +4,7 @@ A remote Model Context Protocol (MCP) server for the Hevy fitness tracking API, 
 
 ## Overview
 
-This project provides a remote MCP server that exposes Hevy API functionality as MCP tools. It allows AI assistants like Claude to interact with your Hevy workout data without authentication complexity.
+This project provides a remote MCP server that exposes Hevy API functionality as MCP tools. It allows AI assistants like Codex to interact with your Hevy workout data without authentication complexity.
 
 **Live URL:** `https://hevy-mcp-server.<your-account>.workers.dev/mcp` (after deployment)
 
@@ -118,8 +118,7 @@ hevy-mcp-server/
 ├── src/
 │   ├── index.ts             # Main exports (Hono app + Durable Object)
 │   ├── app.ts               # Hono application with routing & middleware
-│   ├── local.ts             # Local single-user stdio MCP server entry point
-│   ├── mcp-agent.ts         # Remote MCP agent (OAuth) & tool registration
+│   ├── mcp-agent.ts         # MCP agent implementation & tool registration
 │   ├── mcp-handlers.ts      # MCP transport handlers (streamable-http, SSE)
 │   ├── middleware/
 │   │   └── auth.ts          # Bearer token authentication middleware
@@ -128,7 +127,6 @@ hevy-mcp-server/
 │   │   └── utility.ts       # Health check & home page routes
 │   └── lib/
 │       ├── client.ts        # Hevy API client wrapper
-│       ├── tools.ts         # Shared MCP tool registration (remote + local)
 │       ├── schemas.ts       # Zod validation schemas
 │       ├── transforms.ts    # Data validation & transformation
 │       ├── errors.ts        # Error handling utilities
@@ -144,7 +142,7 @@ hevy-mcp-server/
 ├── api.json                 # Hevy API OpenAPI specification
 ├── wrangler.jsonc           # Cloudflare Workers configuration
 ├── package.json             # Dependencies and scripts
-└── CLAUDE.md               # This file
+└── AGENTS.md               # This file
 ```
 
 ## Local Development
@@ -184,8 +182,8 @@ You can test the local server using:
 npx @modelcontextprotocol/inspector http://localhost:8787/mcp
 ```
 
-**Claude Desktop:**
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+**Codex Desktop:**
+Add to your Codex Desktop config (`~/Library/Application Support/Codex/claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
@@ -196,58 +194,6 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   }
 }
 ```
-
-## Local stdio Server (Single User)
-
-In addition to the remote Cloudflare Workers server, the project ships a
-**local single-user stdio MCP server** (`src/local.ts`). It exposes the same 17
-tools but with **no OAuth, KV, or Cloudflare** — it reads your Hevy API key
-straight from the `HEVY_API_KEY` environment variable and talks to MCP clients
-over stdio. This is the simplest way to use the server for yourself.
-
-Both servers share their tool definitions via `registerHevyTools()` in
-`src/lib/tools.ts`, so behavior stays identical across transports.
-
-### Run it
-
-Get your API key from https://hevy.com/settings?developer, then:
-
-```bash
-HEVY_API_KEY=your-key npm run mcp:local
-```
-
-This runs `tsx src/local.ts`. All human-facing logging goes to stderr, since
-stdout is reserved for the MCP protocol stream.
-
-### Connect a client
-
-**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "hevy": {
-      "command": "npx",
-      "args": ["tsx", "/absolute/path/to/hevy/src/local.ts"],
-      "env": { "HEVY_API_KEY": "your-key" }
-    }
-  }
-}
-```
-
-**Claude Code:**
-```bash
-claude mcp add hevy -e HEVY_API_KEY=your-key -- npx tsx /absolute/path/to/hevy/src/local.ts
-```
-
-**MCP Inspector:**
-```bash
-HEVY_API_KEY=your-key npx @modelcontextprotocol/inspector npx tsx src/local.ts
-```
-
-### When to use which
-
-- **Local stdio (`src/local.ts`)** — just you, on your own machine. Simplest setup, no OAuth.
-- **Remote Workers (`npm start` / `npm run deploy`)** — multi-user, shareable, accessible from Claude web/mobile. Requires GitHub OAuth + KV.
 
 ## Deployment
 
@@ -284,7 +230,7 @@ npx wrangler whoami
 
 ## Connecting to the MCP Server
 
-### Claude Desktop (Production)
+### Codex Desktop (Production)
 
 Add to your config:
 ```json
