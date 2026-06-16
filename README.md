@@ -16,6 +16,12 @@ This MCP server provides comprehensive access to Hevy's fitness tracking capabil
 - **`get_workouts_count`** - Get total number of workouts logged
 - **`get_workout_events`** - Get workout change events (updates/deletes) since a date for syncing
 
+### Training Analytics
+- **`get_training_summary`** - Summarize consistency, gaps, session frequency, duration, and tonnage in pounds
+- **`get_muscle_group_volume`** - Summarize set-volume trends by muscle group, primary muscle only by default
+- **`get_exercise_progression`** - Track top sets and estimated one-rep max for a specific exercise
+- **`get_personal_records`** - Find best estimated one-rep max, heaviest set, and best set volume per exercise
+
 ### Routines
 - **`get_routines`** - List your workout routines
 - **`get_routine`** - Get details of a specific routine

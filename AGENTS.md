@@ -18,7 +18,7 @@ This project provides a remote MCP server that exposes Hevy API functionality as
 
 ## Available Tools
 
-The server provides comprehensive access to the Hevy API with 17 tools:
+The server provides comprehensive access to the Hevy API with 21 tools:
 
 ### Workouts
 
@@ -46,6 +46,28 @@ Get the total number of workouts in your account.
 #### `get_workout_events`
 Get workout change events (updates/deletes) since a date for syncing.
 - **Parameters:** `since` (ISO 8601 date string)
+
+### Training Analytics
+
+#### `get_training_summary`
+Get compact consistency, frequency, gap, duration, and tonnage summaries.
+- **Parameters:** `start_date`, `end_date`, `group_by` (`week` or `month`, default: `week`)
+- **Notes:** Tonnage is returned in pounds. Warmups are excluded; failure and dropset sets count as working sets.
+
+#### `get_muscle_group_volume`
+Get set-volume trends by muscle group.
+- **Parameters:** `start_date`, `end_date`, `group_by`, `include_warmups` (default: false), `count_secondary` (default: false)
+- **Notes:** Counts primary muscle only by default. Missing exercise templates are reported as `unknown`.
+
+#### `get_exercise_progression`
+Get per-bucket top sets and estimated one-rep max for a specific exercise.
+- **Parameters:** `exercise_template_id`, `start_date`, `end_date`, `group_by`
+- **Notes:** Uses the flat exercise-history endpoint and returns weights in pounds.
+
+#### `get_personal_records`
+Get best estimated one-rep max, heaviest set, and best set volume per exercise.
+- **Parameters:** `start_date`, `end_date`
+- **Notes:** Warmups are excluded and records are grouped by primary muscle.
 
 ### Routines
 
@@ -127,6 +149,7 @@ hevy-mcp-server/
 │   │   └── utility.ts       # Health check & home page routes
 │   └── lib/
 │       ├── client.ts        # Hevy API client wrapper
+│       ├── analytics.ts     # Pure training analytics calculations
 │       ├── schemas.ts       # Zod validation schemas
 │       ├── transforms.ts    # Data validation & transformation
 │       ├── errors.ts        # Error handling utilities
@@ -306,7 +329,7 @@ The server uses a clean, modular architecture built on the Hono framework:
 
 **MCP Agent (`src/mcp-agent.ts`):**
 - `MyMCP` class extends `McpAgent` from agents library
-- Registers all 17 MCP tools (workouts, routines, exercises, etc.)
+- Registers all 21 MCP tools (workouts, analytics, routines, exercises, etc.)
 - Handles OAuth authentication and per-user API key retrieval
 - Uses Zod schemas for input validation
 

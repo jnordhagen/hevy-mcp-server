@@ -4,7 +4,7 @@
  *
  * A single-user, no-OAuth alternative to the remote Cloudflare Workers server.
  * Reads the Hevy API key from the HEVY_API_KEY environment variable and exposes
- * the same 17 tools over stdio, so it can be wired directly into Claude Desktop,
+ * the same 21 tools over stdio, so it can be wired directly into Claude Desktop,
  * Claude Code, the MCP Inspector, or any other stdio MCP client.
  *
  * Run with:  HEVY_API_KEY=your-key npx tsx src/local.ts
@@ -22,7 +22,7 @@ async function main() {
 		console.error(
 			"Error: HEVY_API_KEY environment variable is required.\n" +
 				"Get your key at https://hevy.com/settings?developer and set it, e.g.:\n" +
-				"  HEVY_API_KEY=your-key npx tsx src/local.ts"
+				"  HEVY_API_KEY=your-key npx tsx src/local.ts",
 		);
 		process.exit(1);
 	}
@@ -30,7 +30,8 @@ async function main() {
 	const server = new McpServer({
 		name: "Hevy API (local)",
 		version: "3.1.0",
-		description: "Local single-user stdio MCP server for the Hevy fitness tracking API",
+		description:
+			"Local single-user stdio MCP server for the Hevy fitness tracking API",
 	});
 
 	const client = new HevyClient({ apiKey });
