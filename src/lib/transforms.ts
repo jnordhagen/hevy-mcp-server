@@ -171,6 +171,7 @@ export function validateWorkoutExercises(exercises: any[]): void {
 			// Validate numeric fields are not negative
 			const numericFields = [
 				"weight_kg",
+				"weight_lb",
 				"reps",
 				"distance_meters",
 				"duration_seconds",
@@ -258,6 +259,7 @@ export function validateRoutineExercises(exercises: any[]): void {
 			// Validate numeric fields are not negative
 			const numericFields = [
 				"weight_kg",
+				"weight_lb",
 				"reps",
 				"distance_meters",
 				"duration_seconds",

@@ -78,6 +78,10 @@ export function kgToLb(kg: number): number {
 	return kg * KG_TO_LB;
 }
 
+export function lbToKg(lb: number): number {
+	return lb / KG_TO_LB;
+}
+
 export function bucketKey(dateIso: string, groupBy: GroupBy): string {
 	const date = new Date(dateIso);
 	if (Number.isNaN(date.getTime())) return "unknown";

@@ -34,6 +34,7 @@ Get a single workout by ID with full details.
 Log a new workout with exercises and sets.
 - **Parameters:** `title`, `start_time`, `end_time`, `exercises` (array), `description`, `is_private`
 - **Note:** Each exercise requires a `title` field (for display/reference only - not sent to API) and `exercise_template_id`. Order is determined by array position.
+- **Weight units:** Sets accept either `weight_kg` or `weight_lb`. The Hevy API only stores kilograms; `weight_lb` is converted server-side with the exact factor (kept to 4 decimal places of kg) so pounds values round-trip cleanly to your display and avoid artifacts like 89.99 instead of 90. `weight_kg` takes precedence if both are given.
 
 #### `update_workout`
 Update an existing workout.
@@ -83,6 +84,7 @@ Get a single routine by ID with full exercise details.
 Create a new workout routine/program.
 - **Parameters:** `title`, `exercises` (array), `folder_id`, `notes`
 - **Note:** Exercise structure uses only `exercise_template_id` (no `title` or `index` fields needed). Sets also don't require `index` fields.
+- **Weight units:** Sets accept either `weight_kg` or `weight_lb`. The Hevy API only stores kilograms; `weight_lb` is converted server-side with the exact factor (kept to 4 decimal places of kg) so pounds values round-trip cleanly to your display and avoid artifacts like 89.99 instead of 90. `weight_kg` takes precedence if both are given.
 
 #### `update_routine`
 Update an existing routine.

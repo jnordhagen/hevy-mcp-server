@@ -365,6 +365,71 @@ describe("Schema Transforms - API Output Validation", () => {
 	});
 
 	// ============================================
+	// WEIGHT UNIT CONVERSION (weight_lb -> weight_kg)
+	// ============================================
+	describe("weight_lb -> weight_kg conversion", () => {
+		const kgOfFirstWorkoutSet = (input: any) =>
+			transformWorkoutToAPI(input).workout.exercises[0].sets[0].weight_kg;
+		const kgOfFirstRoutineSet = (input: any) =>
+			transformRoutineToAPI(input).routine.exercises[0].sets[0].weight_kg;
+
+		const workoutWith = (set: any) => ({
+			title: "W",
+			start_time: "2024-01-15T10:00:00Z",
+			end_time: "2024-01-15T11:00:00Z",
+			exercises: [{ title: "Bench", exercise_template_id: "1", sets: [set] }],
+		});
+		const routineWith = (set: any) => ({
+			title: "R",
+			exercises: [{ exercise_template_id: "1", sets: [set] }],
+		});
+
+		it("converts weight_lb to kg that round-trips cleanly to pounds", () => {
+			const kg = kgOfFirstWorkoutSet(
+				workoutWith({ type: "normal", weight_lb: 90, reps: 5 })
+			);
+			// 90 lb -> ~40.8233 kg, and back to lb displays as 90.00 (not 89.99)
+			expect(kg).toBeCloseTo(40.8233, 4);
+			expect(Number((kg * 2.2046226218).toFixed(2))).toBe(90);
+		});
+
+		it("applies the same conversion for routine sets", () => {
+			const kg = kgOfFirstRoutineSet(
+				routineWith({ type: "normal", weight_lb: 135, reps: 5 })
+			);
+			expect(Number((kg * 2.2046226218).toFixed(2))).toBe(135);
+		});
+
+		it("prefers weight_kg when both weight_kg and weight_lb are provided", () => {
+			const kg = kgOfFirstWorkoutSet(
+				workoutWith({ type: "normal", weight_kg: 100, weight_lb: 90 })
+			);
+			expect(kg).toBe(100);
+		});
+
+		it("does not emit weight_kg when neither weight is provided", () => {
+			const set = transformWorkoutToAPI(
+				workoutWith({ type: "normal", reps: 10 })
+			).workout.exercises[0].sets[0];
+			expect(set).not.toHaveProperty("weight_kg");
+		});
+
+		it("ignores null weight_lb", () => {
+			const set = transformRoutineToAPI(
+				routineWith({ type: "normal", weight_lb: null, reps: 10 })
+			).routine.exercises[0].sets[0];
+			expect(set).not.toHaveProperty("weight_kg");
+		});
+
+		it("treats weight_lb of 0 as zero kg", () => {
+			const kg = kgOfFirstWorkoutSet(
+				workoutWith({ type: "normal", weight_lb: 0, reps: 10 })
+			);
+			expect(kg).toBe(0);
+		});
+	});
+
+	// ============================================
 	// EXERCISE TEMPLATE TRANSFORMS
 	// ============================================
 	describe("transformExerciseTemplateToAPI()", () => {

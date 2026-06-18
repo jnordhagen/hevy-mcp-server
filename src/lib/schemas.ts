@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { lbToKg } from "./analytics";
 
 // ============================================
 // ENUMS & CONSTANTS
@@ -95,7 +96,8 @@ export type MuscleGroup = z.infer<typeof MuscleGroupEnum>;
  */
 export const WorkoutSetSchema = z.object({
 	type: SetTypeEnum.describe("Set type (required)"),
-	weight_kg: z.number().optional().nullable().describe("Weight in kilograms"),
+	weight_kg: z.number().optional().nullable().describe("Weight in kilograms. Takes precedence over weight_lb if both are provided."),
+	weight_lb: z.number().optional().nullable().describe("Weight in pounds. Converted to kilograms server-side using the exact factor, so values round-trip cleanly to your pounds display (avoids artifacts like 89.99 instead of 90). Ignored if weight_kg is set."),
 	reps: z.number().optional().nullable().describe("Number of repetitions"),
 	distance_meters: z.number().optional().nullable().describe("Distance in meters"),
 	duration_seconds: z.number().optional().nullable().describe("Duration in seconds"),
@@ -157,7 +159,8 @@ export type RepRange = z.infer<typeof RepRangeSchema>;
  */
 export const RoutineSetSchema = z.object({
 	type: SetTypeEnum.describe("Set type (required)"),
-	weight_kg: z.number().optional().nullable().describe("Weight in kilograms"),
+	weight_kg: z.number().optional().nullable().describe("Weight in kilograms. Takes precedence over weight_lb if both are provided."),
+	weight_lb: z.number().optional().nullable().describe("Weight in pounds. Converted to kilograms server-side using the exact factor, so values round-trip cleanly to your pounds display (avoids artifacts like 89.99 instead of 90). Ignored if weight_kg is set."),
 	reps: z.number().optional().nullable().describe("Number of repetitions"),
 	distance_meters: z.number().optional().nullable().describe("Distance in meters"),
 	duration_seconds: z.number().optional().nullable().describe("Duration in seconds"),
@@ -372,6 +375,31 @@ function cleanValue<T>(value: T | null | undefined): T | undefined {
 }
 
 /**
+ * Resolve the effective weight_kg for a set.
+ *
+ * The Hevy API only accepts kilograms. To avoid lb→kg→lb rounding artifacts
+ * (e.g. 90 lb truncated to 40.82 kg displaying back as 89.99 lb), callers may
+ * supply weight_lb and we convert here with the exact factor, keeping enough
+ * precision (4 decimal places of kg) that the value round-trips cleanly to a
+ * pounds display. weight_kg always wins if both are present.
+ *
+ * @param set - A set that may contain weight_kg and/or weight_lb
+ * @returns The weight in kilograms, or undefined if neither is usable
+ */
+function resolveWeightKg(set: {
+	weight_kg?: number | null;
+	weight_lb?: number | null;
+}): number | undefined {
+	const kg = cleanValue(set.weight_kg);
+	if (kg !== undefined) return kg;
+
+	const lb = cleanValue(set.weight_lb);
+	if (lb === undefined) return undefined;
+
+	return Math.round(lbToKg(lb) * 10000) / 10000;
+}
+
+/**
  * Remove undefined values from an object (for cleaner API requests)
  */
 function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
@@ -429,7 +457,7 @@ export function transformWorkoutToAPI(workout: CreateWorkout) {
 				notes: cleanValue(ex.notes),
 				sets: ex.sets.map((set) => removeUndefined({
 					type: set.type,
-					weight_kg: cleanValue(set.weight_kg),
+					weight_kg: resolveWeightKg(set),
 					reps: cleanValue(set.reps),
 					distance_meters: cleanValue(set.distance_meters),
 					duration_seconds: cleanValue(set.duration_seconds),
@@ -480,7 +508,7 @@ export function transformRoutineToAPI(routine: CreateRoutine | UpdateRoutine) {
 			notes: cleanValue(ex.notes),
 			sets: ex.sets.map((set) => removeUndefined({
 				type: set.type,
-				weight_kg: cleanValue(set.weight_kg),
+				weight_kg: resolveWeightKg(set),
 				reps: cleanValue(set.reps),
 				distance_meters: cleanValue(set.distance_meters),
 				duration_seconds: cleanValue(set.duration_seconds),
